@@ -6,14 +6,12 @@ import (
 )
 
 type App struct {
-	mux          *http.ServeMux
-	handlerCount int
+	mux *http.ServeMux
 }
 
 func NewApp() *App {
 	return &App{
-		mux:          http.NewServeMux(),
-		handlerCount: 0,
+		mux: http.NewServeMux(),
 	}
 }
 
