@@ -24,8 +24,6 @@ func Connect() (*pgx.Conn, error) {
 		return nil, err
 	}
 
-	defer conn.Close(context.Background())
-
 	err = conn.Ping(context.Background())
 
 	fmt.Println("Conexión da base de datos PostgreSQL exitosa")
