@@ -1,0 +1,15 @@
+.env
+.out
+.test
+.prof
+.exe
+.exe~
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.DS_Store
+.vscode/
+.idea/
+Thumbs.db
