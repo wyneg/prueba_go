@@ -40,7 +40,11 @@ func main() {
 
 	app.HttpMethods("GET", "/api/search", restHandler.GetGameHandler)
 	app.HttpMethods("GET", "/api/games/{id}", restHandler.GetGameByIDHandler)
-	app.HttpMethods("POST", "/api/games", repositoryHandler.CreateGameHandler)
+	app.HttpMethods("GET", "/api/library", repositoryHandler.GetGameHandler)
+	app.HttpMethods("POST", "/api/library", repositoryHandler.CreateGameHandler)
+	app.HttpMethods("PUT", "/api/library/{id}", repositoryHandler.UpdateGameHandler)
+	app.HttpMethods("DELETE", "/api/library/{id}", repositoryHandler.DeleteGameHandler)
+	app.HttpMethods("GET", "/api/library/stats", repositoryHandler.StatsGameHandler)
 
 	if err := app.RunServer(os.Getenv("PORT")); err != nil {
 		log.Fatal(err)
