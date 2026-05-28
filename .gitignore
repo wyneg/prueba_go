@@ -1,5 +1,6 @@
 .env
 .out
+*.out
 .test
 .prof
 .exe
