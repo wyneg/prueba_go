@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/wyneg/prueba_go/models"
 	"github.com/wyneg/prueba_go/server"
 	"github.com/wyneg/prueba_go/services"
 )
@@ -22,10 +23,7 @@ func (r *RestHandler) GetGameHandler(c *server.Context) {
 	gameName := c.Request.URL.Query().Get("q")
 
 	if gameName == "" {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"code":  strconv.Itoa(http.StatusBadRequest),
-			"error": "El parámetro de consulta 'q' es requerido",
-		})
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("El parámetro de consulta 'q' es requerido"))
 		return
 	}
 
@@ -33,10 +31,7 @@ func (r *RestHandler) GetGameHandler(c *server.Context) {
 
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "Error cuando se está") {
-			c.JSON(http.StatusBadRequest, map[string]string{
-				"code":  strconv.Itoa(http.StatusBadRequest),
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, models.NewBadRequestError(err.Error()))
 			return
 		}
 
@@ -45,10 +40,7 @@ func (r *RestHandler) GetGameHandler(c *server.Context) {
 
 		code, _ := strconv.Atoi(codeError)
 
-		c.JSON(code, map[string]string{
-			"code":  codeError,
-			"error": descriptionError,
-		})
+		c.JSON(code, models.NewError(code, descriptionError))
 		return
 	}
 
@@ -60,10 +52,7 @@ func (r *RestHandler) GetGameByIDHandler(c *server.Context) {
 	id := c.Request.PathValue("id")
 
 	if id == "" {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"code":  strconv.Itoa(http.StatusBadRequest),
-			"error": "El parámetro de consulta 'id' es requerido",
-		})
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("El parámetro de consulta 'id' es requerido"))
 		return
 	}
 
@@ -71,10 +60,7 @@ func (r *RestHandler) GetGameByIDHandler(c *server.Context) {
 
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "Error cuando se está") {
-			c.JSON(http.StatusBadRequest, map[string]string{
-				"code":  strconv.Itoa(http.StatusBadRequest),
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, models.NewBadRequestError(err.Error()))
 			return
 		}
 
@@ -83,10 +69,7 @@ func (r *RestHandler) GetGameByIDHandler(c *server.Context) {
 
 		code, _ := strconv.Atoi(codeError)
 
-		c.JSON(code, map[string]string{
-			"code":  codeError,
-			"error": descriptionError,
-		})
+		c.JSON(code, models.NewError(code, descriptionError))
 		return
 	}
 

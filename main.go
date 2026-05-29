@@ -14,6 +14,13 @@ import (
 	"github.com/wyneg/prueba_go/services"
 )
 
+var (
+	connectDBFunc = database.Connect
+	runServerFunc = func(app *server.App, port string) error {
+		return app.RunServer(port)
+	}
+)
+
 func main() {
 
 	err := godotenv.Load()
@@ -22,13 +29,20 @@ func main() {
 		log.Fatal("Error cargando archivo .env")
 	}
 
-	db, err := database.Connect()
+	// db, err := database.Connect()
+	db, err := connectDBFunc()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer db.Close(context.Background())
+	// defer db.Close(context.Background())
+
+	defer func() {
+		if db != nil {
+			db.Close(context.Background())
+		}
+	}()
 
 	rawgService := services.NewRAWGService(os.Getenv("RAWG_API_KEY"), os.Getenv("RAWG_BASE_URL"))
 	restHandler := handlers.NewRestHandler(rawgService)
@@ -46,7 +60,11 @@ func main() {
 	app.HttpMethods("DELETE", "/api/library/{id}", repositoryHandler.DeleteGameHandler)
 	app.HttpMethods("GET", "/api/library/stats", repositoryHandler.StatsGameHandler)
 
-	if err := app.RunServer(os.Getenv("PORT")); err != nil {
+	// if err := app.RunServer(os.Getenv("PORT")); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	if err := runServerFunc(app, os.Getenv("PORT")); err != nil {
 		log.Fatal(err)
 	}
 

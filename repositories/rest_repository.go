@@ -7,16 +7,31 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/wyneg/prueba_go/models"
 )
 
-type RestRepository struct {
-	db *pgx.Conn
+type DBConnection interface {
+	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+	Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error)
 }
 
-func NewRestRepository(db *pgx.Conn) *RestRepository {
+type RestRepository struct {
+	db DBConnection
+}
+
+func NewRestRepository(db DBConnection) *RestRepository {
 	return &RestRepository{db: db}
 }
+
+// type RestRepository struct {
+// 	db *pgx.Conn
+// }
+
+// func NewRestRepository(db *pgx.Conn) *RestRepository {
+// 	return &RestRepository{db: db}
+// }
 
 func (p *RestRepository) Create(cxt context.Context, game *models.GameLibrary) error {
 	query := "INSERT INTO game_library (rawg_id, title, genre, platform, cover_url) VALUES ($1, $2, $3, $4, $5) RETURNING id, added_at"
@@ -162,9 +177,9 @@ func (p *RestRepository) Stats(cxt context.Context) (models.GameStatsResponse, e
 		}
 	}
 
-	average := p.db.QueryRow(cxt, queryAverage).Scan(&stats.Total, &stats.AverageScore)
+	err = p.db.QueryRow(cxt, queryAverage).Scan(&stats.Total, &stats.AverageScore)
 
-	if average != nil {
+	if err != nil {
 		return models.GameStatsResponse{}, fmt.Errorf("Error al obtener promedio: %w", err)
 	}
 

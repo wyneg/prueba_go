@@ -16,16 +16,25 @@ func (e *CustomError) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Code, e.ErrorMsg)
 }
 
-func NewNotFoundError(message string) *CustomError {
+func NewError(httpError int, message string) *CustomError {
 	return &CustomError{
-		Code:     strconv.Itoa(http.StatusNotFound),
+		Code:     strconv.Itoa(httpError),
 		ErrorMsg: message,
 	}
 }
 
+func NewNotFoundError(message string) *CustomError {
+	return NewError(http.StatusNotFound, message)
+}
+
 func NewBadRequestError(message string) *CustomError {
-	return &CustomError{
-		Code:     strconv.Itoa(http.StatusBadRequest),
-		ErrorMsg: message,
-	}
+	return NewError(http.StatusBadRequest, message)
+}
+
+func NewInternalServerError(message string) *CustomError {
+	return NewError(http.StatusInternalServerError, message)
+}
+
+func NewConflictError(message string) *CustomError {
+	return NewError(http.StatusConflict, message)
 }

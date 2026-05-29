@@ -23,28 +23,29 @@ func (r *RepositoryHandler) CreateGameHandler(c *server.Context) {
 	var request models.GameLibrary
 
 	if err := c.BindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"code":  strconv.Itoa(http.StatusBadRequest),
-			"error": "Datos inválidos",
-		})
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("Datos inválidos"))
 		return
+	}
 
+	if request.RawgID == nil || *request.RawgID == 0 {
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("El campo RAWG_ID es obligatorio"))
+		return
+	}
+
+	if request.Title == "" {
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("El campo Title es obligatorio"))
+		return
 	}
 
 	err := r.dbService.CreateGame(c.Context(), &request)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "SQLSTATE 23505") {
-			c.JSON(http.StatusConflict, map[string]string{
-				"code":  strconv.Itoa(http.StatusConflict),
-				"error": "El RAWG_ID de juego ya existe",
-			})
+			c.JSON(http.StatusConflict, models.NewConflictError("El RAWG_ID de juego ya existe"))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, map[string]string{
-			"code":  strconv.Itoa(http.StatusInternalServerError),
-			"error": "Error al crear el juego",
-		})
+
+		c.JSON(http.StatusInternalServerError, models.NewInternalServerError("Error al crear el juego"))
 		return
 	}
 
@@ -58,18 +59,16 @@ func (r *RepositoryHandler) GetGameHandler(c *server.Context) {
 	result, err := r.dbService.GetGame(c.Context(), status)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]string{
-			"code":  strconv.Itoa(http.StatusInternalServerError),
-			"error": "Error al obtener los juegos",
-		})
+		c.JSON(http.StatusInternalServerError, models.NewInternalServerError("Error al obtener los juegos"))
 		return
 
-	} else if result == nil {
-		c.JSON(http.StatusNotFound, map[string]string{
-			"code":  strconv.Itoa(http.StatusNotFound),
-			"error": "Juegos no encontrados en BD",
-		})
-		return
+	}
+
+	if gamesSlice, ok := result.([]models.GameLibrary); ok {
+		if len(gamesSlice) == 0 {
+			c.JSON(http.StatusNotFound, models.NewNotFoundError("Juegos no encontrados en BD"))
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, result)
@@ -81,20 +80,24 @@ func (r *RepositoryHandler) UpdateGameHandler(c *server.Context) {
 	parsedUint, err := strconv.ParseUint(id, 10, 32)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"code":  strconv.Itoa(http.StatusBadRequest),
-			"error": "ID inválido",
-		})
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("ID inválido"))
 		return
 	}
 
 	var request models.GameLibrary
 
 	if err := c.BindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"code":  strconv.Itoa(http.StatusBadRequest),
-			"error": "Datos inválidos",
-		})
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("Datos inválidos"))
+		return
+	}
+
+	if request.PersonalScore == nil && request.PersonalNote == nil && request.Status == nil {
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("Debe enviar al menos uno o más campos para actualizar"))
+		return
+	}
+
+	if request.PersonalScore != nil && (*request.PersonalScore < 1 || *request.PersonalScore > 10) {
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("La puntuación personal debe estar entre 1 y 10"))
 		return
 	}
 
@@ -102,17 +105,11 @@ func (r *RepositoryHandler) UpdateGameHandler(c *server.Context) {
 
 	if err != nil {
 		if strings.Contains(err.Error(), "No se encontró el ID") {
-			c.JSON(http.StatusNotFound, map[string]string{
-				"code":  strconv.Itoa(http.StatusNotFound),
-				"error": "ID no encontrado",
-			})
+			c.JSON(http.StatusNotFound, models.NewNotFoundError("ID no encontrado"))
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, map[string]string{
-			"code":  strconv.Itoa(http.StatusInternalServerError),
-			"error": "Error al actualizar el juego",
-		})
+		c.JSON(http.StatusInternalServerError, models.NewInternalServerError("Error al actualizar el juego"))
 		return
 	}
 
@@ -125,10 +122,7 @@ func (r *RepositoryHandler) DeleteGameHandler(c *server.Context) {
 	parsedUint, err := strconv.ParseUint(id, 10, 32)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"code":  strconv.Itoa(http.StatusBadRequest),
-			"error": "ID inválido",
-		})
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("ID inválido"))
 		return
 	}
 
@@ -136,17 +130,11 @@ func (r *RepositoryHandler) DeleteGameHandler(c *server.Context) {
 
 	if err != nil {
 		if strings.Contains(err.Error(), "No se encontró el juego") {
-			c.JSON(http.StatusNotFound, map[string]string{
-				"code":  strconv.Itoa(http.StatusNotFound),
-				"error": "Juego no encontrado",
-			})
+			c.JSON(http.StatusNotFound, models.NewNotFoundError("Juego no encontrado"))
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, map[string]string{
-			"code":  strconv.Itoa(http.StatusInternalServerError),
-			"error": "Error al eliminar el juego",
-		})
+		c.JSON(http.StatusInternalServerError, models.NewInternalServerError("Error al eliminar el juego"))
 		return
 	}
 
@@ -157,10 +145,7 @@ func (r *RepositoryHandler) StatsGameHandler(c *server.Context) {
 	stats, err := r.dbService.StatsGames(c.Context())
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, map[string]string{
-			"code":  strconv.Itoa(http.StatusInternalServerError),
-			"error": "Error al obtener estadísticas",
-		})
+		c.JSON(http.StatusInternalServerError, models.NewInternalServerError("Error al obtener estadísticas"))
 		return
 	}
 
