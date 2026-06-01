@@ -15,7 +15,7 @@ func TestConnect(t *testing.T) {
 
 	defer func() {
 		_ = os.Setenv("DB_URL", origDBURL)
-		pgxConnectFunc = origConnectFunc // Siempre restauramos la función original
+		pgxConnectFunc = origConnectFunc
 	}()
 
 	t.Run("Error al cargar .env", func(t *testing.T) {

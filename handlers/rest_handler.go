@@ -30,7 +30,12 @@ func (r *RestHandler) GetGameHandler(c *server.Context) {
 	game, err := r.rawgService.GetGame(gameName)
 
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "Error cuando se está") {
+		if strings.HasPrefix(err.Error(), "Error cuando se está realizando") {
+			c.JSON(http.StatusInternalServerError, models.NewInternalServerError(err.Error()))
+			return
+		}
+
+		if strings.HasPrefix(err.Error(), "Error cuando se está creando") {
 			c.JSON(http.StatusBadRequest, models.NewBadRequestError(err.Error()))
 			return
 		}
@@ -59,7 +64,12 @@ func (r *RestHandler) GetGameByIDHandler(c *server.Context) {
 	game, err := r.rawgService.GetGameByID(id)
 
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "Error cuando se está") {
+		if strings.HasPrefix(err.Error(), "Error cuando se está realizando") {
+			c.JSON(http.StatusInternalServerError, models.NewInternalServerError(err.Error()))
+			return
+		}
+
+		if strings.HasPrefix(err.Error(), "Error cuando se está creando") {
 			c.JSON(http.StatusBadRequest, models.NewBadRequestError(err.Error()))
 			return
 		}
