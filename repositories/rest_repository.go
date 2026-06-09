@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -34,6 +35,7 @@ func (p *RestRepository) Create(cxt context.Context, game *models.GameLibrary) e
 	err := p.db.QueryRow(cxt, query, game.RawgID, game.Title, game.Genre, game.Platform, game.CoverURL).Scan(&lastInsertID, &addedAt)
 
 	if err != nil {
+		log.Println(err)
 		return fmt.Errorf("Error al crear juego: %w", err)
 	}
 
@@ -55,6 +57,7 @@ func (p *RestRepository) Select(cxt context.Context, status string) ([]models.Ga
 	result, err := p.db.Query(cxt, query, args...)
 
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("Error al traer juego(s): %w", err)
 	}
 
@@ -68,6 +71,7 @@ func (p *RestRepository) Select(cxt context.Context, status string) ([]models.Ga
 		err := result.Scan(&game.ID, &game.RawgID, &game.Title, &game.Genre, &game.Platform, &game.CoverURL, &game.PersonalNote, &game.PersonalScore, &game.Status, &game.AddedAt)
 
 		if err != nil {
+			log.Println(err)
 			return nil, fmt.Errorf("Error al escanear juego(s): %w", err)
 		}
 		games = append(games, game)
@@ -107,6 +111,7 @@ func (p *RestRepository) Update(cxt context.Context, id uint, game *models.GameL
 	result, err := p.db.Exec(cxt, query, args...)
 
 	if err != nil {
+		log.Println(err)
 		return fmt.Errorf("Error al actualizar juego: %w", err)
 	}
 
@@ -123,6 +128,7 @@ func (p *RestRepository) Delete(cxt context.Context, id uint) error {
 	result, err := p.db.Exec(cxt, query, id)
 
 	if err != nil {
+		log.Println(err)
 		return fmt.Errorf("Error al eliminar juego: %w", err)
 	}
 
@@ -144,6 +150,7 @@ func (p *RestRepository) Stats(cxt context.Context) (models.GameStatsResponse, e
 	status, err := p.db.Query(cxt, queryStatus)
 
 	if err != nil {
+		log.Println(err)
 		return models.GameStatsResponse{}, fmt.Errorf("Error al obtener estatus: %w", err)
 	}
 
@@ -154,6 +161,7 @@ func (p *RestRepository) Stats(cxt context.Context) (models.GameStatsResponse, e
 		err := status.Scan(&statusValue, &statusCount)
 
 		if err != nil {
+			log.Println(err)
 			return models.GameStatsResponse{}, fmt.Errorf("Error al escanear estatus: %w", err)
 		}
 
@@ -172,6 +180,7 @@ func (p *RestRepository) Stats(cxt context.Context) (models.GameStatsResponse, e
 	err = p.db.QueryRow(cxt, queryAverage).Scan(&stats.Total, &stats.AverageScore)
 
 	if err != nil {
+		log.Println(err)
 		return models.GameStatsResponse{}, fmt.Errorf("Error al obtener promedio: %w", err)
 	}
 
