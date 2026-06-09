@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,8 +11,16 @@ import (
 	"github.com/wyneg/prueba_go/services"
 )
 
+type GameDatabase interface {
+	CreateGame(ctx context.Context, game *models.GameLibrary) error
+	GetGame(ctx context.Context, status string) (interface{}, error)
+	UpdateGame(ctx context.Context, id uint, game *models.GameLibrary) error
+	DeleteGame(ctx context.Context, id uint) error
+	StatsGames(ctx context.Context) (models.GameStatsResponse, error)
+}
+
 type RepositoryHandler struct {
-	dbService *services.DBService
+	dbService GameDatabase
 }
 
 func NewRepositoryHandler(dbService *services.DBService) *RepositoryHandler {
@@ -98,6 +107,20 @@ func (r *RepositoryHandler) UpdateGameHandler(c *server.Context) {
 
 	if request.PersonalScore != nil && (*request.PersonalScore < 1 || *request.PersonalScore > 10) {
 		c.JSON(http.StatusBadRequest, models.NewBadRequestError("La puntuación personal debe estar entre 1 y 10"))
+		return
+	}
+
+	estados := []string{"pendiente", "jugando", "completado", "abandonado"}
+	estadoValido := 0
+
+	for _, estado := range estados {
+		if strings.EqualFold(estado, *request.Status) {
+			estadoValido++
+		}
+	}
+
+	if estadoValido == 0 {
+		c.JSON(http.StatusBadRequest, models.NewBadRequestError("Los estados permitidos son: 'pendiente', 'jugando', 'completado', 'abandonado'"))
 		return
 	}
 

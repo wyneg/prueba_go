@@ -49,6 +49,28 @@ func (a *ConnAdapter) QueryRow(ctx context.Context, query string, args ...any) p
 	return a.PgxConnIface.QueryRow(ctx, query, mockArgs...)
 }
 
+type mockDBService struct{}
+
+func (m *mockDBService) UpdateGame(ctx context.Context, id uint, game *models.GameLibrary) error {
+	return nil
+}
+
+func (m *mockDBService) CreateGame(ctx context.Context, game *models.GameLibrary) error {
+	return nil
+}
+
+func (m *mockDBService) GetGame(ctx context.Context, status string) (interface{}, error) {
+	return nil, nil
+}
+
+func (m *mockDBService) DeleteGame(ctx context.Context, id uint) error {
+	return nil
+}
+
+func (m *mockDBService) StatsGames(ctx context.Context) (models.GameStatsResponse, error) {
+	return models.GameStatsResponse{}, nil
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }
@@ -148,7 +170,7 @@ func TestUpdateGameHandler(t *testing.T) {
 
 }
 
-func TestDeleteGameHandler(t *testing.T) {
+func TestDeleteGameHandler_TestValidatePersonalScore(t *testing.T) {
 	t.Run("ID inválido en Delete", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodDelete, "/games/xyz", nil)
@@ -496,6 +518,62 @@ func TestUpdateGameHandler_ServicePaths(t *testing.T) {
 
 }
 
+func TestValidateStatus(t *testing.T) {
+
+	tests := []struct {
+		name           string
+		statusInput    string
+		expectedStatus int
+	}{
+		{name: "Estado 'pendiente' minuscula", statusInput: "pendiente", expectedStatus: http.StatusNoContent},
+		{name: "Estado 'jugando' minuscula", statusInput: "jugando", expectedStatus: http.StatusNoContent},
+		{name: "Estado 'completado' minuscula", statusInput: "completado", expectedStatus: http.StatusNoContent},
+		{name: "Estado 'abandonado' minuscula", statusInput: "abandonado", expectedStatus: http.StatusNoContent},
+		{name: "Estado 'PENDIENTE' mayuscula (EqualFold)", statusInput: "PENDIENTE", expectedStatus: http.StatusNoContent},
+		{name: "Estado 'JuGaNdO' mixto (EqualFold)", statusInput: "JuGaNdO", expectedStatus: http.StatusNoContent},
+
+		{name: "Estado vacio", statusInput: "", expectedStatus: http.StatusBadRequest},
+		{name: "Estado no permitido ('eliminado')", statusInput: "eliminado", expectedStatus: http.StatusBadRequest},
+		{name: "Estado numerico", statusInput: "123", expectedStatus: http.StatusBadRequest},
+		{name: "Estado similar pero incorrecto", statusInput: "pendientes", expectedStatus: http.StatusBadRequest},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			mockDB := &mockDBService{}
+			handler := &RepositoryHandler{dbService: mockDB}
+
+			statusValue := tt.statusInput
+			requestBody := models.GameLibrary{
+				Status: &statusValue,
+			}
+			jsonBody, _ := json.Marshal(requestBody)
+
+			req, err := http.NewRequest("PUT", "/games/1", bytes.NewBuffer(jsonBody))
+			if err != nil {
+				t.Fatalf("Error al crear la request: %v", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+
+			w := httptest.NewRecorder()
+
+			c := &server.Context{
+				ResponseWriter: w,
+				Request:        req,
+				Cxt:            req.Context(),
+			}
+			c.Request.SetPathValue("id", "1")
+
+			handler.UpdateGameHandler(c)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Para el caso [%s]: se esperaba código %d, pero se obtuvo %d", tt.name, tt.expectedStatus, w.Code)
+			}
+		})
+	}
+}
+
 func TestDeleteGameHandler_ServicePaths(t *testing.T) {
 	t.Run("Juego No Encontrado - Status 404", func(t *testing.T) {
 		connMock, handler := setupTestEnv(t)
@@ -599,12 +677,4 @@ func TestStatsGameHandler_ServicePaths(t *testing.T) {
 			t.Errorf("se esperaba 500 Internal Server Error, se obtuvo %d", w.Code)
 		}
 	})
-}
-
-type MockDBServicePunteros struct {
-	services.DBService
-}
-
-func (m *MockDBServicePunteros) GetGame(ctx context.Context, status string) (interface{}, error) {
-	return []*models.GameLibrary{}, nil
 }

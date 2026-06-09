@@ -102,6 +102,11 @@ func TestCustomError(t *testing.T) {
 		if errConflict.Code != "409" {
 			t.Errorf("NewConflictError configuró un código erróneo")
 		}
+
+		errGateway := NewBadGatewayError(msg)
+		if errGateway.Code != "502" {
+			t.Errorf("NewBadGatewayError configuró un código erróneo")
+		}
 	})
 
 	t.Run("Method Error()", func(t *testing.T) {

@@ -39,14 +39,12 @@ func (s *RAWGService) GetGame(gameName string) (*models.RAWGResponse, error) {
 
 	url := s.BaseURL + "/games?key=" + s.ApiKey + "&search=" + gameName
 
-	//Formular request
 	request, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error cuando se está creando la solicitud: %v", err)
 	}
 
-	//Formuular response
 	response, err := s.httpClient.Do(request)
 
 	if err != nil {
@@ -79,14 +77,12 @@ func (s *RAWGService) GetGame(gameName string) (*models.RAWGResponse, error) {
 func (s *RAWGService) GetGameByID(gameName string) (*models.GameDetail, error) {
 	url := s.BaseURL + "/games/" + gameName + "?key=" + s.ApiKey
 
-	//Formular request
 	request, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error cuando se está creando la solicitud: %v", err)
 	}
 
-	//Formuular response
 	response, err := s.httpClient.Do(request)
 
 	if err != nil {

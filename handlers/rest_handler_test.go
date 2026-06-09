@@ -53,7 +53,7 @@ func TestRestGetGameHandler(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		mock.Close() // Esto provoca un error de "realizando" la petición
+		mock.Close()
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/external/games?q=Zelda", nil)
@@ -61,9 +61,8 @@ func TestRestGetGameHandler(t *testing.T) {
 
 		handler.GetGameHandler(c)
 
-		// --- CORREGIDO: Ahora se espera un 500 según la lógica de tu handler ---
-		if w.Code != http.StatusInternalServerError {
-			t.Errorf("se esperaba estatus 500 por prefijo de error real, se obtuvo %d", w.Code)
+		if w.Code != http.StatusBadGateway {
+			t.Errorf("se esperaba estatus 502 por prefijo de error real, se obtuvo %d", w.Code)
 		}
 	})
 
@@ -112,12 +111,10 @@ func TestRestGetGameHandler(t *testing.T) {
 
 	t.Run("Error con prefijo de creacion", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		// Usamos un query normal, el truco estará en el servicio
+
 		r := httptest.NewRequest(http.MethodGet, "/external/games?q=Zelda", nil)
 		c := &server.Context{ResponseWriter: w, Request: r, Cxt: context.Background()}
 
-		// Forzamos un fallo de inicialización en http.NewRequest usando caracteres de control URL inválidos (\x7f)
-		// Esto hace que Go aborte antes de enviar la petición, generando el error de "creación"
 		badService := services.NewRAWGService("fake", "http://localhost:8080/\x7f")
 		handler := NewRestHandler(badService)
 
@@ -148,7 +145,7 @@ func TestGetGameByIDHandler(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		mock.Close() // Esto provoca un error de "realizando" la petición
+		mock.Close()
 
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/external/games/123", nil)
@@ -157,8 +154,7 @@ func TestGetGameByIDHandler(t *testing.T) {
 
 		handler.GetGameByIDHandler(c)
 
-		// --- CORREGIDO: Ahora se espera un 500 según la lógica de tu handler ---
-		if w.Code != http.StatusInternalServerError {
+		if w.Code != http.StatusBadGateway {
 			t.Errorf("se esperaba estatus 500 por error real de red en ID, se obtuvo %d", w.Code)
 		}
 	})
@@ -214,8 +210,6 @@ func TestGetGameByIDHandler(t *testing.T) {
 		r = addRestPathValue(r, "id", "123")
 		c := &server.Context{ResponseWriter: w, Request: r, Cxt: context.Background()}
 
-		// Usamos una URL corrupta/inválida en el cliente HTTP para obligar a Go a fallar en http.NewRequest()
-		// Esto genera típicamente un error de inicialización que tu servicio traduce como "Error cuando se está creando..."
 		badHandler := NewRestHandler(services.NewRAWGService("fake", "http://[::1]:namedport"))
 		badHandler.GetGameByIDHandler(c)
 

@@ -31,7 +31,7 @@ func (r *RestHandler) GetGameHandler(c *server.Context) {
 
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "Error cuando se está realizando") {
-			c.JSON(http.StatusInternalServerError, models.NewInternalServerError(err.Error()))
+			c.JSON(http.StatusBadGateway, models.NewBadGatewayError(err.Error()))
 			return
 		}
 
@@ -65,7 +65,7 @@ func (r *RestHandler) GetGameByIDHandler(c *server.Context) {
 
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "Error cuando se está realizando") {
-			c.JSON(http.StatusInternalServerError, models.NewInternalServerError(err.Error()))
+			c.JSON(http.StatusBadGateway, models.NewBadGatewayError(err.Error()))
 			return
 		}
 

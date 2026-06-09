@@ -38,3 +38,7 @@ func NewInternalServerError(message string) *CustomError {
 func NewConflictError(message string) *CustomError {
 	return NewError(http.StatusConflict, message)
 }
+
+func NewBadGatewayError(message string) *CustomError {
+	return NewError(http.StatusBadGateway, message)
+}

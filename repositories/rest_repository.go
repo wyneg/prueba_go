@@ -25,14 +25,6 @@ func NewRestRepository(db DBConnection) *RestRepository {
 	return &RestRepository{db: db}
 }
 
-// type RestRepository struct {
-// 	db *pgx.Conn
-// }
-
-// func NewRestRepository(db *pgx.Conn) *RestRepository {
-// 	return &RestRepository{db: db}
-// }
-
 func (p *RestRepository) Create(cxt context.Context, game *models.GameLibrary) error {
 	query := "INSERT INTO game_library (rawg_id, title, genre, platform, cover_url) VALUES ($1, $2, $3, $4, $5) RETURNING id, added_at"
 
@@ -57,7 +49,7 @@ func (p *RestRepository) Select(cxt context.Context, status string) ([]models.Ga
 
 	if status != "" {
 		query += " WHERE status = $1"
-		args = append(args, status)
+		args = append(args, strings.ToLower(status))
 	}
 
 	result, err := p.db.Query(cxt, query, args...)
@@ -104,7 +96,7 @@ func (p *RestRepository) Update(cxt context.Context, id uint, game *models.GameL
 
 	if game.Status != nil {
 		setClauses = append(setClauses, fmt.Sprintf("status = $%d", argCount))
-		args = append(args, *game.Status)
+		args = append(args, strings.ToLower(*game.Status))
 		argCount++
 	}
 

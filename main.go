@@ -29,14 +29,11 @@ func main() {
 		log.Fatal("Error cargando archivo .env")
 	}
 
-	// db, err := database.Connect()
 	db, err := connectDBFunc()
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// defer db.Close(context.Background())
 
 	defer func() {
 		if db != nil {
@@ -59,10 +56,6 @@ func main() {
 	app.HttpMethods("PUT", "/api/library/{id}", repositoryHandler.UpdateGameHandler)
 	app.HttpMethods("DELETE", "/api/library/{id}", repositoryHandler.DeleteGameHandler)
 	app.HttpMethods("GET", "/api/library/stats", repositoryHandler.StatsGameHandler)
-
-	// if err := app.RunServer(os.Getenv("PORT")); err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	if err := runServerFunc(app, os.Getenv("PORT")); err != nil {
 		log.Fatal(err)
